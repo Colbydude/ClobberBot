@@ -1,25 +1,29 @@
 {
-    "name": "tumblr-photo-bot",
+    "name": "clobber-bot",
     "version": "1.0.0",
-    "description": "A Discord bot for fetching photos from Tumblr.",
+    "description": "Big Time Gamer",
     "main": "bot.js",
     "engines": {
-        "node": "9.x",
+        "node": "12.x",
         "npm": "*"
     },
     "scripts": {
-        "start": "node bot.js"
+        "start": "node bot.js",
+        "start:dotenv": "node -r dotenv/config bot.js"
     },
-    "repository": "git@github.com:Colbydude/Discord-Tumblr-Photo-Bot.git",
+    "repository": "git@github.com:Colbydude/ClobberBot.git",
     "author": "Colby Terry",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/Colbydude/Discord-Tumblr-Photo-Bot/issues"
+        "url": "https://github.com/Colbydude/ClobberBot/issues"
     },
-    "homepage": "https://github.com/Colbydude/Discord-Tumblr-Photo-Bot/issues",
+    "homepage": "https://github.com/Colbydude/ClobberBot/issues",
     "dependencies": {
-        "axios": "^0.18.0",
         "discord.js": "^11.3.2",
+        "dotenv": "^8.2.0",
         "winston": "^2.3.1"
+    },
+    "devDependencies": {
+        "eslint": "^7.0.0"
     }
 }
