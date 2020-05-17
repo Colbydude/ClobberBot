@@ -1,7 +1,3 @@
-# Discord Tumblr Photo Bot
+# ClobberBot
 
-A Discord bot for fetching photos from Tumblr.
-
-## Usage
-
-`!tumblr <search tag>`
+Big Time Gamer
