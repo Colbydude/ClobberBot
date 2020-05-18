@@ -19,7 +19,7 @@
     },
     "homepage": "https://github.com/Colbydude/ClobberBot/issues",
     "dependencies": {
-        "discord.js": "^11.3.2",
+        "discord.js": "^12.0",
         "dotenv": "^8.2.0",
         "winston": "^2.3.1"
     },
