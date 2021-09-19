@@ -3,13 +3,8 @@
     "version": "1.0.0",
     "description": "Big Time Gamer",
     "main": "bot.js",
-    "engines": {
-        "node": "12.x",
-        "npm": "*"
-    },
     "scripts": {
-        "start": "node bot.js",
-        "start:dotenv": "node -r dotenv/config bot.js"
+        "start": "node bot.js"
     },
     "repository": "git@github.com:Colbydude/ClobberBot.git",
     "author": "Colby Terry",
