@@ -1,60 +1,35 @@
 {
-    "extends": "eslint:recommended",
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint", "prettier", "import"],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended"
+    ],
     "env": {
         "node": true,
         "es6": true
     },
+    "ignorePatterns": ["**/*.js"],
     "parserOptions": {
-        "ecmaVersion": 2019,
+        "ecmaVersion": 2022,
         "sourceType": "module"
     },
     "rules": {
-        "curly": [
-            "error",
-            "multi-line",
-            "consistent"
-        ],
-        "indent": [
-            "error",
-            4
-        ],
-        "no-console": "error",
-        "no-empty-function": "error",
-        "no-multi-spaces": "error",
-        "no-multiple-empty-lines": [
+        "prettier/prettier": [
             "error",
             {
-                "max": 2,
-                "maxEOF": 1,
-                "maxBOF": 0
+                "endOfLine": "auto"
             }
-        ],
-        "no-shadow": [
-            "error",
-            {
-                "allow": [
-                    "err",
-                    "resolve",
-                    "reject"
-                ]
+        ]
+    },
+    "settings": {
+        "import/resolver": {
+            "typescript": {
+                "alwaysTryTypes": true,
+                "project": "./tsconfig.json"
             }
-        ],
-        "no-trailing-spaces": [
-            "error"
-        ],
-        "no-unused-vars": [
-            "warning"
-        ],
-        "no-var": "error",
-        "prefer-const": "error",
-        "quotes": [
-            "error",
-            "single"
-        ],
-        "semi": [
-            "error",
-            "always"
-        ],
-        "yoda": "error"
+        }
     }
 }
