@@ -6,7 +6,7 @@
     "scripts": {
         "build": "tsc",
         "lint": "eslint .",
-        "start": "node dist/src/main.js"
+        "start": "node dist/main.js"
     },
     "repository": "git@github.com:Colbydude/ClobberBot.git",
     "author": "Colby Terry",

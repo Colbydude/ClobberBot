@@ -1,6 +1,6 @@
 import { CommandContext, SlashCreator } from 'slash-create';
 
-import ClobBotCommand from 'clobbotcommand';
+import ClobBotCommand from '../clobbotcommand';
 import logger from '../logger';
 
 export default class GamesCommand extends ClobBotCommand {
@@ -18,7 +18,10 @@ export default class GamesCommand extends ClobBotCommand {
             await ctx.defer();
 
             const guild = await this.getGuild(ctx);
+            console.log(guild);
             const games = guild.roles.cache.filter((role) => role.name.startsWith('Gamers: '));
+
+            console.log(games);
 
             if (games.size === 0) {
                 return void ctx.sendFollowUp(

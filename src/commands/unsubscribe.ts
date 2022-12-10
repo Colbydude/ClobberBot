@@ -1,6 +1,6 @@
 import { CommandContext, CommandOptionType, SlashCreator } from 'slash-create';
 
-import ClobBotCommand from 'clobbotcommand';
+import ClobBotCommand from '../clobbotcommand';
 import logger from '../logger';
 
 export default class UnsubscribeCommand extends ClobBotCommand {

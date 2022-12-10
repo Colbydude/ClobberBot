@@ -6,7 +6,7 @@ import path from 'path';
 import { GatewayServer, SlashCreator } from 'slash-create';
 
 import bot from './bot';
-import logger from 'logger';
+import logger from './logger';
 
 // Register commands.
 const creator = new SlashCreator({
@@ -19,7 +19,7 @@ const creator = new SlashCreator({
 
 creator
     .withServer(
-        new GatewayServer((handler) => bot.ws.on(GatewayDispatchEvents.IntegrationCreate, handler))
+        new GatewayServer((handler) => bot.ws.on(GatewayDispatchEvents.InteractionCreate, handler))
     )
     .registerCommandsIn(path.join(__dirname, './commands'))
     .syncCommands();

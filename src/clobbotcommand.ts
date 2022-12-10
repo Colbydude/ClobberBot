@@ -1,6 +1,9 @@
 import { Client, Guild, GuildMember, TextChannel } from 'discord.js';
 import { CommandContext, SlashCommand } from 'slash-create';
 
+/**
+ * Nice wrapper around SlashCommand<Client> for common functionality.
+ */
 export default class ClobBotCommand extends SlashCommand<Client> {
     /**
      * Get the given channel from the guild.
