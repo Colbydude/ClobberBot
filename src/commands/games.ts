@@ -1,7 +1,6 @@
 import { CommandContext, SlashCreator } from 'slash-create';
 
 import ClobBotCommand from '../clobbotcommand';
-import logger from '../logger';
 
 export default class GamesCommand extends ClobBotCommand {
     constructor(creator: SlashCreator) {
@@ -13,24 +12,21 @@ export default class GamesCommand extends ClobBotCommand {
         this.filePath = __filename;
     }
 
-    async fun(ctx: CommandContext): Promise<void> {
+    async run(ctx: CommandContext): Promise<void> {
         try {
             await ctx.defer();
 
             const guild = await this.getGuild(ctx);
-            console.log(guild);
             const games = guild.roles.cache.filter((role) => role.name.startsWith('Gamers: '));
-
-            console.log(games);
 
             if (games.size === 0) {
                 return void ctx.sendFollowUp(
-                    'There are no games to subscribe to. Add one using `!addgame <game>`.'
+                    '😢 | There are no games to subscribe to. Add one using `/addgame <game>`.'
                 );
             }
 
             const reply = [
-                'This is a list of games you can subscribe to using `!notifyme <game>`.',
+                '🎮 | This is a list of games you can subscribe to using `/notifyme <game>`.',
                 games
                     .map((r) => r.name.substring(8))
                     .sort()
@@ -39,7 +35,7 @@ export default class GamesCommand extends ClobBotCommand {
 
             return void ctx.sendFollowUp(reply.join('\n'));
         } catch (error) {
-            logger.error(error);
+            return void this.handleError(ctx, error);
         }
     }
 }

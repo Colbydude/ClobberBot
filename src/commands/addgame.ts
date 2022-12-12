@@ -22,18 +22,18 @@ export default class AddGameCommand extends ClobBotCommand {
         this.filePath = __filename;
     }
 
-    async fun(ctx: CommandContext): Promise<void> {
+    async run(ctx: CommandContext): Promise<void> {
         try {
             await ctx.defer();
 
             const guild = await this.getGuild(ctx);
 
-            const gameName = ctx.options.game.join(' ');
+            const gameName = ctx.options.game;
             const roleName = `Gamers: ${gameName}`;
 
             if (guild.roles.cache.some((role) => role.name === roleName)) {
                 return void ctx.sendFollowUp(
-                    `The game ${gameName} already exists. You can subscribe to receive notifications using \`!notifyme ${gameName}\`.`
+                    `❗️ | The game \`${gameName}\` already exists. You can subscribe to receive notifications using \`/notifyme ${gameName}\`.`
                 );
             }
 
@@ -46,16 +46,16 @@ export default class AddGameCommand extends ClobBotCommand {
                 logger.info(`Created role ${role.name}.`);
 
                 return void ctx.sendFollowUp(
-                    `You can now subscribe to receive notifications using \`!notifyme ${gameName}\`.`
+                    `✅ | You can now subscribe to receive notifications using \`/notifyme ${gameName}\`.`
                 );
             } catch (error) {
                 logger.error(error);
                 return void ctx.sendFollowUp(
-                    'Could not add the game. Does the bot have permissions to create roles?'
+                    '❌ | Could not add the game. Does the bot have permissions to create roles?'
                 );
             }
         } catch (error) {
-            logger.error(error);
+            return void this.handleError(ctx, error);
         }
     }
 }

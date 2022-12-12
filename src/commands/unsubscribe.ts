@@ -1,7 +1,6 @@
 import { CommandContext, CommandOptionType, SlashCreator } from 'slash-create';
 
 import ClobBotCommand from '../clobbotcommand';
-import logger from '../logger';
 
 export default class UnsubscribeCommand extends ClobBotCommand {
     constructor(creator: SlashCreator) {
@@ -21,28 +20,28 @@ export default class UnsubscribeCommand extends ClobBotCommand {
         this.filePath = __filename;
     }
 
-    async fun(ctx: CommandContext): Promise<void> {
+    async run(ctx: CommandContext): Promise<void> {
         try {
             await ctx.defer();
 
             const guild = await this.getGuild(ctx);
             const member = await this.getMember(guild, ctx.user.id);
 
-            const gameName = ctx.options.game.join(' ');
+            const gameName = ctx.options.game;
             const roleName = `Gamers: ${gameName}`;
             const role = guild.roles.cache.find((role) => role.name === roleName);
 
             if (!role) {
                 return void ctx.sendFollowUp(
-                    `The game ${gameName} does not exist. You can add it using \`!addgame <game>\`, or check existing games using \`!games\`.`
+                    `❗️ | The game \`${gameName}\` does not exist. You can add it using \`/addgame <game>\`, or check existing games using \`/games\`.`
                 );
             }
 
             member.roles.remove(role);
 
-            return void ctx.sendFollowUp('👍');
+            return void ctx.sendFollowUp('👍 | Unsubscribed!');
         } catch (error) {
-            logger.error(error);
+            return void this.handleError(ctx, error);
         }
     }
 }

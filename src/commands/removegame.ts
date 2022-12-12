@@ -1,7 +1,6 @@
 import { CommandContext, CommandOptionType, SlashCreator } from 'slash-create';
 
 import ClobBotCommand from '../clobbotcommand';
-import logger from '../logger';
 
 export default class RemoveGameCommand extends ClobBotCommand {
     constructor(creator: SlashCreator) {
@@ -21,27 +20,27 @@ export default class RemoveGameCommand extends ClobBotCommand {
         this.filePath = __filename;
     }
 
-    async fun(ctx: CommandContext): Promise<void> {
+    async run(ctx: CommandContext): Promise<void> {
         try {
             await ctx.defer();
 
             const guild = await this.getGuild(ctx);
 
-            const gameName = ctx.options.game.join(' ');
+            const gameName = ctx.options.game;
             const roleName = `Gamers: ${gameName}`;
             const role = guild.roles.cache.find((role) => role.name === roleName);
 
             if (!role) {
                 return void ctx.sendFollowUp(
-                    `The game ${gameName} does not exist. You can add it using \`!addgame ${gameName}\`.`
+                    `❗️ | The game \`${gameName}\` does not exist. You can add it using \`/addgame ${gameName}\`.`
                 );
             }
 
             role.delete();
 
-            return void ctx.sendFollowUp('👍');
+            return void ctx.sendFollowUp('🗑️ | Removed!');
         } catch (error) {
-            logger.error(error);
+            return void this.handleError(ctx, error);
         }
     }
 }
