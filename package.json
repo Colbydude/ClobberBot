@@ -1,12 +1,11 @@
 {
-    "name": "clobber-bot",
-    "version": "1.0.0",
-    "description": "Big Time Gamer",
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
     "main": "main.js",
     "scripts": {
         "build": "tsc",
         "lint": "eslint .",
-        "start": "node dist/main.js"
+        "start": "npm run build && node --env-file=.env dist/main.js"
     },
     "repository": "git@github.com:Colbydude/ClobberBot.git",
     "author": "Colby Terry",
@@ -16,21 +15,25 @@
     },
     "homepage": "https://github.com/Colbydude/ClobberBot/issues",
     "dependencies": {
-        "discord.js": "^14.5.0",
-        "dotenv": "^16.0.3",
-        "slash-create": "^5.9.0",
-        "winston": "^3.8.2"
+        "archipelago.js": "^2.0.4",
+        "bufferutil": "^4.1.0",
+        "discord.js": "^14.25.1",
+        "mysql2": "^3.20.0",
+        "reflect-metadata": "^0.2.2",
+        "slash-create": "^6.8.1",
+        "typeorm": "^0.3.28",
+        "winston": "^3.19.0"
     },
     "devDependencies": {
-        "@types/node": "^18.8.1",
-        "@typescript-eslint/eslint-plugin": "^5.39.0",
-        "@typescript-eslint/parser": "^5.39.0",
-        "eslint": "^8.24.0",
-        "eslint-config-prettier": "^8.5.0",
-        "eslint-import-resolver-typescript": "^3.5.1",
-        "eslint-plugin-import": "^2.26.0",
-        "eslint-plugin-prettier": "^4.2.1",
-        "prettier": "^2.7.1",
-        "typescript": "^4.8.4"
+        "@eslint/js": "^9.19.0",
+        "@stylistic/eslint-plugin": "^5.10.0",
+        "@types/node": "^22.13.5",
+        "eslint": "^9.17.0",
+        "eslint-config-prettier": "^10.0.1",
+        "eslint-import-resolver-typescript": "^4.4.4",
+        "eslint-plugin-import": "^2.32.0",
+        "prettier": "^3.4.2",
+        "typescript": "^5.7.2",
+        "typescript-eslint": "^8.23.0"
     }
 }
