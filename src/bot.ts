@@ -1,6 +1,8 @@
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 
-import logger from './logger';
+import { createScopedLogger } from './logger';
+
+const logger = createScopedLogger('Discord');
 
 const bot = new Client({
     intents: [

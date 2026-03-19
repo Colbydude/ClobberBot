@@ -3,6 +3,7 @@ import path from 'path';
 import { GatewayServer, SlashCreator } from 'slash-create';
 
 import bot from './bot';
+import { initDB } from './db';
 import logger from './logger';
 
 (async () => {
@@ -21,6 +22,9 @@ import logger from './logger';
     await creator.syncCommands();
 
     logger.info(`Loaded ${creator.commands.size} command handlers.`);
+
+    // Initialize database.
+    await initDB();
 
     // Connect the bot.
     bot.login(process.env.DISCORD_CLIENT_TOKEN);

@@ -1,12 +1,25 @@
-import winston from 'winston';
+import { createLogger, format, transports } from 'winston';
+const { combine, timestamp, printf } = format;
 
-const logger = winston.createLogger({
-    level: 'debug',
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        }),
-    ],
+const withFallbackLabel = format((info) => {
+    if (!info.label) {
+        info.label = 'ClobberBot';
+    }
+    return info;
 });
+
+const myFormat = printf(({ level, message, label, timestamp }) => {
+    return `[${timestamp}][${label}][${level.toUpperCase()}]: ${message}`;
+});
+
+const logger = createLogger({
+    level: 'debug',
+    format: combine(timestamp(), withFallbackLabel(), myFormat),
+    transports: [new transports.Console()],
+});
+
+export function createScopedLogger(label: string) {
+    return logger.child({ label });
+}
 
 export default logger;
