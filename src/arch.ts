@@ -1,4 +1,4 @@
-import { Client } from 'archipelago.js';
+import { Client, NetworkSlot } from 'archipelago.js';
 
 import { createScopedLogger } from './logger';
 
@@ -45,6 +45,16 @@ export async function connect(
         logger.error(`Error connecting to server. ${error}`);
         throw error;
     }
+}
+
+export function findPlayerBySlotName(client: Client, alias: string): NetworkSlot {
+    const slots = client.players.slots;
+
+    for (const slot of Object.values(slots)) {
+        if (slot.name === alias) return slot;
+    }
+
+    throw `Could not find the slot ${alias}!`;
 }
 
 /**

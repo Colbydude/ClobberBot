@@ -2,11 +2,15 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
 
-import { ArchipelagoSessionPlayer } from '../../types';
+import { ArchipelagoSessionPlayer } from './archipelagoSessionPlayer';
+import { ArchipelagoPlayer } from './archipelagoPlayer';
 
 @Entity({ name: 'archipelago_sessions' })
 export class ArchipelagoSession {
@@ -16,14 +20,12 @@ export class ArchipelagoSession {
     @Column()
     discord_guild_id: string;
 
-    @Column()
-    started_by: string;
+    @ManyToOne((_) => ArchipelagoPlayer, { createForeignKeyConstraints: false })
+    @JoinColumn({ name: 'started_by' })
+    started_by: ArchipelagoPlayer;
 
     @Column()
     seed: string;
-
-    @Column('json')
-    players: ArchipelagoSessionPlayer[];
 
     @CreateDateColumn()
     created_at: Date;
@@ -33,4 +35,9 @@ export class ArchipelagoSession {
 
     @Column('datetime', { nullable: true })
     finished_at: Date;
+
+    @OneToMany((_) => ArchipelagoSessionPlayer, (player) => player.session, {
+        createForeignKeyConstraints: false,
+    })
+    players: ArchipelagoSessionPlayer;
 }

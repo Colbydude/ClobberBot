@@ -1,3 +1,4 @@
+import { type Client } from 'archipelago.js';
 import {
     ButtonStyle,
     CommandContext,
@@ -7,9 +8,16 @@ import {
     TextInputStyle,
 } from 'slash-create';
 
-import { connect } from '../arch';
+import { connect, findPlayerBySlotName } from '../arch';
 import ClobBotCommand from '../clobbotcommand';
+import { type ArchipelagoPlayer } from '../db/models/archipelagoPlayer';
+import { type ArchipelagoPlayerGame } from '../db/models/archipelagoPlayerGame';
+import { type ArchipelagoSession } from '../db/models/archipelagoSession';
+import { type ArchipelagoSessionPlayer } from '../db/models/archipelagoSessionPlayer';
+import { findOrCreatePlayer } from '../db/repositories/archipelagoPlayer';
+import { findOrCreateGameForPlayer } from '../db/repositories/archipelagoPlayerGame';
 import { createSession } from '../db/repositories/archipelagoSession';
+import { addSessionPlayer } from '../db/repositories/archipelagoSessionPlayer';
 import logger from '../logger';
 
 export default class ArchipelagoStart extends ClobBotCommand {
@@ -57,38 +65,66 @@ export default class ArchipelagoStart extends ClobBotCommand {
                     const server = ctx.options[ctx.subcommands[0]].server;
                     const slot = ctx.options[ctx.subcommands[0]].slot;
 
+                    let client: Client;
+
                     try {
                         // Connect to the Archipelago Server
-                        var client = await connect(guild.id, channel, server, slot);
+                        client = await connect(guild.id, channel, server, slot);
                     } catch (error) {
                         logger.error(error);
-                        return void ctx.sendFollowUp(
-                            '💥 | Could not connect to the Archipelago server. Check the logs for more details.',
-                        );
+                        await ctx.sendFollowUp({ content: `💥 | ${error}`, ephemeral: true });
+                        return;
                     }
+
+                    let player: ArchipelagoPlayer;
+                    let session: ArchipelagoSession;
+                    let game: ArchipelagoPlayerGame;
+                    let sessionPlayer: ArchipelagoSessionPlayer;
+
+                    // No solo games allowed. :)
+                    // if (Object.values(client.players.slots).length == 1) {
+                    //     await ctx.sendFollowUp({
+                    //         content: `🔪 | No solo Archipelagos allowed. :)`,
+                    //         ephemeral: true,
+                    //     });
+                    //     return;
+                    // }
 
                     try {
-                        // Create the session.
-                        var newSession = await createSession(guild.id, client.room.seedName, {
-                            discord_user: member.user.username,
-                            game: client.game,
-                            slot,
-                            status: 'joined',
+                        player = await findOrCreatePlayer({
+                            discord_id: member.user.id,
+                            discord_username: member.user.username,
                         });
 
-                        // @TODO: Player
+                        // Create the session.
+                        session = await createSession({
+                            discord_guild_id: guild.id,
+                            seed: client.room.seedName,
+                            started_by: player,
+                        });
+
+                        game = await findOrCreateGameForPlayer({
+                            player,
+                            name: client.players.self.game,
+                        });
+
+                        sessionPlayer = await addSessionPlayer({
+                            session,
+                            player,
+                            game,
+                            slot,
+                        });
                     } catch (error) {
                         logger.error(error);
-                        return void ctx.sendFollowUp(
-                            '💥 | Could not instantiate session in the database. Check the logs for more details.',
-                        );
+                        await ctx.sendFollowUp({ content: `💥 | ${error}`, ephemeral: true });
+                        return;
                     }
 
-                    ctx.send({
+                    await ctx.send({
                         embeds: [
                             {
                                 title: 'Archipelago Session Created',
-                                description: `Seed: \`${newSession.seed}\`\nJoin to get _Archipelapoints_:tm:.`,
+                                description: `Seed: \`${session.seed}\`\nJoin to get _Archipelapoints_:tm:.`,
                                 color: 0x5865f2,
                             },
                         ],
@@ -107,8 +143,8 @@ export default class ArchipelagoStart extends ClobBotCommand {
                         ],
                     });
 
-                    return void ctx.registerComponent('open_slot_modal', (buttonCtx) => {
-                        return void buttonCtx.sendModal(
+                    ctx.registerComponent('open_slot_modal', async (buttonCtx) => {
+                        buttonCtx.sendModal(
                             {
                                 title: 'Join Archipelago',
                                 custom_id: 'slot_modal',
@@ -127,16 +163,51 @@ export default class ArchipelagoStart extends ClobBotCommand {
                                     },
                                 ],
                             },
-                            (modalCtx) => {
-                                modalCtx.send({ content: 'Joined', ephemeral: true });
+                            async (modalCtx) => {
+                                try {
+                                    const member = await this.getMember(guild, modalCtx.user.id);
+                                    const slot = modalCtx.values['slot_name'];
+
+                                    logger.info(
+                                        `${member.user.username} joining under slot ${slot}...`,
+                                    );
+
+                                    const joinPlayer = await findOrCreatePlayer({
+                                        discord_id: member.user.id,
+                                        discord_username: member.user.username,
+                                    });
+
+                                    const slotData = findPlayerBySlotName(client, slot as string);
+
+                                    const game = await findOrCreateGameForPlayer({
+                                        player,
+                                        name: slotData.game,
+                                    });
+
+                                    await addSessionPlayer({
+                                        session,
+                                        player: joinPlayer,
+                                        game,
+                                        slot: slot as string,
+                                    });
+
+                                    await modalCtx.send({
+                                        content: `${member.user.username} joined under slot ${slot}!`,
+                                    });
+                                } catch (error) {
+                                    logger.error(error);
+                                    await modalCtx.send({
+                                        content: `💥 | ${error}`,
+                                        ephemeral: true,
+                                    });
+                                }
                             },
                         );
                     });
             }
-
-            return void ctx.sendFollowUp('Please choose a subcommand.');
         } catch (error) {
-            return void this.handleError(ctx, error);
+            await this.handleError(ctx, error);
+            return;
         }
     }
 }

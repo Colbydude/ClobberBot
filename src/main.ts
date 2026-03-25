@@ -20,6 +20,7 @@ import logger from './logger';
 
     await creator.registerCommandsIn(path.join(__dirname, './commands'));
     await creator.syncCommands();
+    await creator.syncCommandsIn('425423795264815104', true);
 
     logger.info(`Loaded ${creator.commands.size} command handlers.`);
 

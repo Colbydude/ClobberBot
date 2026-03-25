@@ -1,5 +1,5 @@
 import { Client, Guild, GuildMember, TextChannel } from 'discord.js';
-import { CommandContext, SlashCommand } from 'slash-create';
+import { CommandContext, ModalInteractionContext, SlashCommand } from 'slash-create';
 
 import logger from './logger';
 
@@ -23,7 +23,7 @@ export default class ClobBotCommand extends SlashCommand<Client> {
     /**
      * Get the guild out of the given context.
      */
-    protected async getGuild(ctx: CommandContext): Promise<Guild> {
+    protected async getGuild(ctx: CommandContext | ModalInteractionContext): Promise<Guild> {
         if (!ctx.guildID) {
             throw new Error('Guild ID not set.');
         }
@@ -41,8 +41,8 @@ export default class ClobBotCommand extends SlashCommand<Client> {
     /**
      * Common error handling for all commands.
      */
-    handleError(ctx: CommandContext, error: Error) {
+    async handleError(ctx: CommandContext, error: Error) {
         logger.error('💥', error);
-        return void ctx.sendFollowUp('💥 | An error occurred. Check the logs for more details.');
+        await ctx.sendFollowUp('💥 | An error occurred. Check the logs for more details.');
     }
 }

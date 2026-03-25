@@ -1,30 +1,24 @@
 import { DB, logger } from '..';
 import { ArchipelagoSession } from '../models/archipelagoSession';
-import { ArchipelagoSessionPlayer } from '../../types';
 
-const sessionRepo = DB.getRepository(ArchipelagoSession);
+const repo = DB.getRepository(ArchipelagoSession);
 
 /**
  *
  */
 export async function createSession(
-    guildId: string,
-    seed: string,
-    player: ArchipelagoSessionPlayer,
+    sessionData: Pick<ArchipelagoSession, 'discord_guild_id' | 'seed' | 'started_by'>,
 ): Promise<ArchipelagoSession> {
     logger.info('Registering Archipelago Session...');
 
-    await sessionRepo.insert({
-        discord_guild_id: guildId,
-        players: [player],
-        seed,
-        started_by: player.discord_user,
+    let session = await repo.findOne({
+        where: { discord_guild_id: sessionData.discord_guild_id, seed: sessionData.seed },
     });
 
-    var newSession = await sessionRepo.findOneByOrFail({
-        discord_guild_id: guildId,
-        seed,
-    });
+    if (session) throw 'Session already created for this seed!';
 
-    return newSession;
+    session = repo.create(sessionData);
+    await repo.save(session);
+
+    return session;
 }

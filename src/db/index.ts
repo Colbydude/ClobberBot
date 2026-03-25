@@ -1,8 +1,10 @@
 import { DataSource } from 'typeorm';
 
-import { createScopedLogger } from '../logger';
 import { ArchipelagoPlayer } from './models/archipelagoPlayer';
 import { ArchipelagoSession } from './models/archipelagoSession';
+import { ArchipelagoPlayerGame } from './models/archipelagoPlayerGame';
+import { ArchipelagoSessionPlayer } from './models/archipelagoSessionPlayer';
+import { createScopedLogger } from '../logger';
 
 export const logger = createScopedLogger('DB');
 
@@ -15,7 +17,12 @@ export const DB = new DataSource({
     database: process.env.DB_DATABASE,
     synchronize: true,
     logging: false,
-    entities: [ArchipelagoPlayer, ArchipelagoSession],
+    entities: [
+        ArchipelagoPlayer,
+        ArchipelagoPlayerGame,
+        ArchipelagoSession,
+        ArchipelagoSessionPlayer,
+    ],
     subscribers: [],
     migrations: [],
 });
