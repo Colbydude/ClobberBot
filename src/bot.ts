@@ -4,7 +4,7 @@ import { createScopedLogger } from './logger';
 
 const logger = createScopedLogger('Discord');
 
-const bot = new Client({
+export const bot = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,

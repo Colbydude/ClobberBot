@@ -1,5 +1,13 @@
 import { Client, NetworkSlot } from 'archipelago.js';
+import { TextChannel } from 'discord.js';
 
+import { bot } from './bot';
+import { checkFinished, findSessionBySeed } from './db/repositories/archipelagoSession';
+import {
+    findSessionPlayersBySlot,
+    finish,
+    release,
+} from './db/repositories/archipelagoSessionPlayer';
 import { createScopedLogger } from './logger';
 
 const logger = createScopedLogger('Archipelago');
@@ -29,11 +37,75 @@ export async function connect(
         activeClients.push({ guild: guildId, channel: channelId, client });
     });
 
-    client.socket.on('disconnected', () => {
+    client.socket.on('disconnected', async () => {
         logger.warn('Disconnected from the Archipelago Server.');
-        // @TODO: Push message to Discord channel.
 
-        removeClient(guildId);
+        try {
+            const guild = await bot.guilds.fetch(guildId);
+            const channel = (await guild.channels.fetch(channelId)) as TextChannel;
+
+            await channel.send(`💥 | ClobberBot Archipelago client disconnected from server.`);
+        } catch (error) {
+            logger.error(error);
+        } finally {
+            removeClient(guildId);
+        }
+    });
+
+    client.messages.on('goaled', async (_, player) => {
+        try {
+            const guild = await bot.guilds.fetch(guildId);
+            const channel = (await guild.channels.fetch(channelId)) as TextChannel;
+
+            const session = await findSessionBySeed({
+                discord_guild_id: guildId,
+                seed: client.room.seedName,
+            });
+            const players = await findSessionPlayersBySlot(session.id, player.alias);
+
+            const dbPromises = players.map((player) => {
+                return finish(player);
+            });
+            const discordPromises = players.map((player) => {
+                return channel.send(`🎉 | ${player.slot} has finished ${player.game.name}!`);
+            });
+
+            await Promise.all([...dbPromises, ...discordPromises]);
+
+            if (await checkFinished(session)) {
+                await channel.send(`🏁 | Archipelago finished!`);
+            }
+        } catch (error) {
+            logger.error(error);
+        }
+    });
+
+    client.messages.on('released', async (_, player) => {
+        try {
+            const guild = await bot.guilds.fetch(guildId);
+            const channel = (await guild.channels.fetch(channelId)) as TextChannel;
+
+            const session = await findSessionBySeed({
+                discord_guild_id: guildId,
+                seed: client.room.seedName,
+            });
+            const players = await findSessionPlayersBySlot(session.id, player.alias);
+
+            const dbPromises = players.map((player) => {
+                return release(player);
+            });
+            const discordPromises = players.map((player) => {
+                return channel.send(`💢 | ${player.slot} has released ${player.game.name}.`);
+            });
+
+            await Promise.all([...dbPromises, ...discordPromises]);
+
+            if (await checkFinished(session)) {
+                await channel.send(`🏁 | Archipelago finished!`);
+            }
+        } catch (error) {
+            logger.error(error);
+        }
     });
 
     try {

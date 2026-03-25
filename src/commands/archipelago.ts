@@ -13,7 +13,6 @@ import ClobBotCommand from '../clobbotcommand';
 import { type ArchipelagoPlayer } from '../db/models/archipelagoPlayer';
 import { type ArchipelagoPlayerGame } from '../db/models/archipelagoPlayerGame';
 import { type ArchipelagoSession } from '../db/models/archipelagoSession';
-import { type ArchipelagoSessionPlayer } from '../db/models/archipelagoSessionPlayer';
 import { findOrCreatePlayer } from '../db/repositories/archipelagoPlayer';
 import { findOrCreateGameForPlayer } from '../db/repositories/archipelagoPlayerGame';
 import { createSession } from '../db/repositories/archipelagoSession';
@@ -67,8 +66,8 @@ export default class ArchipelagoStart extends ClobBotCommand {
 
                     let client: Client;
 
+                    // Connect to the Archipelago Server.
                     try {
-                        // Connect to the Archipelago Server
                         client = await connect(guild.id, channel, server, slot);
                     } catch (error) {
                         logger.error(error);
@@ -79,24 +78,23 @@ export default class ArchipelagoStart extends ClobBotCommand {
                     let player: ArchipelagoPlayer;
                     let session: ArchipelagoSession;
                     let game: ArchipelagoPlayerGame;
-                    let sessionPlayer: ArchipelagoSessionPlayer;
 
                     // No solo games allowed. :)
-                    // if (Object.values(client.players.slots).length == 1) {
-                    //     await ctx.sendFollowUp({
-                    //         content: `🔪 | No solo Archipelagos allowed. :)`,
-                    //         ephemeral: true,
-                    //     });
-                    //     return;
-                    // }
+                    if (Object.values(client.players.slots).length == 1) {
+                        await ctx.sendFollowUp({
+                            content: `🔪 | No solo Archipelagos allowed. :)`,
+                            ephemeral: true,
+                        });
+                        return;
+                    }
 
+                    // Create the session.
                     try {
                         player = await findOrCreatePlayer({
                             discord_id: member.user.id,
                             discord_username: member.user.username,
                         });
 
-                        // Create the session.
                         session = await createSession({
                             discord_guild_id: guild.id,
                             seed: client.room.seedName,
@@ -108,7 +106,7 @@ export default class ArchipelagoStart extends ClobBotCommand {
                             name: client.players.self.game,
                         });
 
-                        sessionPlayer = await addSessionPlayer({
+                        await addSessionPlayer({
                             session,
                             player,
                             game,
@@ -120,11 +118,15 @@ export default class ArchipelagoStart extends ClobBotCommand {
                         return;
                     }
 
+                    // Display embed with join button.
                     await ctx.send({
                         embeds: [
                             {
                                 title: 'Archipelago Session Created',
                                 description: `Seed: \`${session.seed}\`\nJoin to get _Archipelapoints_:tm:.`,
+                                thumbnail: {
+                                    url: 'https://avatars.githubusercontent.com/u/76268402?s=200&v=4',
+                                },
                                 color: 0x5865f2,
                             },
                         ],
@@ -143,6 +145,7 @@ export default class ArchipelagoStart extends ClobBotCommand {
                         ],
                     });
 
+                    // Slot modal.
                     ctx.registerComponent('open_slot_modal', async (buttonCtx) => {
                         buttonCtx.sendModal(
                             {
@@ -192,7 +195,7 @@ export default class ArchipelagoStart extends ClobBotCommand {
                                     });
 
                                     await modalCtx.send({
-                                        content: `${member.user.username} joined under slot ${slot}!`,
+                                        content: `🎮 | ${member.user.username} joined under slot ${slot}, playing ${slotData.game}!`,
                                     });
                                 } catch (error) {
                                     logger.error(error);
@@ -203,6 +206,11 @@ export default class ArchipelagoStart extends ClobBotCommand {
                                 }
                             },
                         );
+                    });
+
+                    // Send join message for host.
+                    await ctx.send({
+                        content: `🎮 | ${member.user.username} joined under slot ${slot}, playing ${client.players.self.game}!`,
                     });
             }
         } catch (error) {
