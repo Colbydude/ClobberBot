@@ -8,7 +8,7 @@ import {
     TextInputStyle,
 } from 'slash-create';
 
-import { connect, findPlayerBySlotName } from '../arch';
+import { connect, findPlayerBySlotName } from '../archipelagoClient';
 import ClobBotCommand from '../clobbotcommand';
 import { type ArchipelagoPlayer } from '../db/models/archipelagoPlayer';
 import { type ArchipelagoPlayerGame } from '../db/models/archipelagoPlayerGame';
@@ -183,7 +183,7 @@ export default class ArchipelagoStart extends ClobBotCommand {
                                     const slotData = findPlayerBySlotName(client, slot as string);
 
                                     const game = await findOrCreateGameForPlayer({
-                                        player,
+                                        player: joinPlayer,
                                         name: slotData.game,
                                     });
 

@@ -1,12 +1,15 @@
-import { ArchipelagoSession } from 'db/models/archipelagoSession';
+import { In, IsNull } from 'typeorm';
+
 import { DB } from '..';
 import { ArchipelagoPlayerGame } from '../models/archipelagoPlayerGame';
+import { ArchipelagoSession } from '../models/archipelagoSession';
 import { ArchipelagoSessionPlayer } from '../models/archipelagoSessionPlayer';
 
 const repo = DB.getRepository(ArchipelagoSessionPlayer);
 
 /**
- *
+ * Adds the given player to the given session.
+ * @throws If the player has already joined under the same or a different slot.
  */
 export async function addSessionPlayer(
     sessionPlayerData: Pick<ArchipelagoSessionPlayer, 'session' | 'player' | 'game' | 'slot'>,
@@ -29,20 +32,8 @@ export async function addSessionPlayer(
 }
 
 /**
- *
- */
-export async function checkAllPlayersFinished(session: ArchipelagoSession): Promise<boolean> {
-    const unfinishedCount = await repo
-        .createQueryBuilder('player')
-        .where('player.session_id = :sessionId', { sessionId: session.id })
-        .andWhere('player.finished_at IS NULL')
-        .getCount();
-
-    return unfinishedCount === 0;
-}
-
-/**
- *
+ * Finds all session players by the given slot name.
+ * @throws If the session player cannot be found.
  */
 export async function findSessionPlayersBySlot(
     sessionId: string,
@@ -62,35 +53,46 @@ export async function findSessionPlayersBySlot(
 }
 
 /**
- *
+ * Update all relevant columns when a player goals or releases,
+ * then checks if all players for a session have finished.
+ * @returns Whether or not every player has finished.
  */
-export async function finish(player: ArchipelagoSessionPlayer): Promise<void> {
-    await DB.transaction(async (manager) => {
+export async function finishPlayers(
+    sessionId: string,
+    sessionPlayers: ArchipelagoSessionPlayer[],
+    update: 'finished' | 'released',
+) {
+    return await DB.transaction(async (manager) => {
+        const sessionRepo = manager.getRepository(ArchipelagoSession);
         const sessionPlayerRepo = manager.getRepository(ArchipelagoSessionPlayer);
         const gameRepo = manager.getRepository(ArchipelagoPlayerGame);
 
-        player.status = 'finished';
-        player.finished_at = new Date();
-        player.game.completions++;
+        // Mark players as finished/released.
+        await sessionPlayerRepo.update(
+            { id: In(sessionPlayers.map((p) => p.id)) },
+            { status: update, finished_at: new Date() },
+        );
 
-        await sessionPlayerRepo.save(player);
-        await gameRepo.save(player.game);
-    });
-}
+        // Update game counts.
+        const gameIds = Array.from(new Set(sessionPlayers.map((p) => p.game.id)));
+        const column = update === 'finished' ? 'completions' : 'releases';
 
-/**
- *
- */
-export async function release(player: ArchipelagoSessionPlayer): Promise<void> {
-    await DB.transaction(async (manager) => {
-        const sessionPlayerRepo = manager.getRepository(ArchipelagoSessionPlayer);
-        const gameRepo = manager.getRepository(ArchipelagoPlayerGame);
+        await gameRepo.update({ id: In(gameIds) }, { [column]: () => `${column} + 1` });
 
-        player.status = 'released';
-        player.finished_at = new Date();
-        player.game.releases++;
+        // Check if any players are unfinished.
+        const remaining = await sessionPlayerRepo.countBy({
+            session: { id: sessionId },
+            finished_at: IsNull(),
+        });
 
-        await sessionPlayerRepo.save(player);
-        await gameRepo.save(player.game);
+        if (remaining > 0) return false;
+
+        // Mark session finished.
+        const result = await sessionRepo.update(
+            { id: sessionId, finished_at: IsNull() },
+            { finished_at: new Date() },
+        );
+
+        return (result.affected ?? 0) > 0;
     });
 }

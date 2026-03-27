@@ -4,7 +4,7 @@ import { ArchipelagoPlayerGame } from '../models/archipelagoPlayerGame';
 const repo = DB.getRepository(ArchipelagoPlayerGame);
 
 /**
- *
+ * Finds or creates the given game for the given player.
  */
 export async function findOrCreateGameForPlayer(
     gameData: Pick<ArchipelagoPlayerGame, 'player' | 'name'>,

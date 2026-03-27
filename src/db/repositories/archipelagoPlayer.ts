@@ -4,7 +4,7 @@ import { ArchipelagoPlayer } from '../models/archipelagoPlayer';
 const repo = DB.getRepository(ArchipelagoPlayer);
 
 /**
- *
+ * Finds or creates the player by their Discord identity.
  */
 export async function findOrCreatePlayer(
     playerData: Pick<ArchipelagoPlayer, 'discord_id' | 'discord_username'>,

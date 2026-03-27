@@ -1,11 +1,11 @@
 import { DB, logger } from '..';
 import { ArchipelagoSession } from '../models/archipelagoSession';
-import { checkAllPlayersFinished } from './archipelagoSessionPlayer';
 
 const repo = DB.getRepository(ArchipelagoSession);
 
 /**
- *
+ * Creates the Archipielago session.
+ * @throws If there is an existing session for the given seed.
  */
 export async function createSession(
     sessionData: Pick<ArchipelagoSession, 'discord_guild_id' | 'seed' | 'started_by'>,
@@ -13,7 +13,7 @@ export async function createSession(
     logger.info('Registering Archipelago Session...');
 
     try {
-        await findSessionBySeed(sessionData); // throws if session not found
+        await findSessionBySeed(sessionData);
 
         throw 'Session already created for this seed!';
     } catch (error) {
@@ -25,19 +25,8 @@ export async function createSession(
 }
 
 /**
- *
- */
-export async function checkFinished(session: ArchipelagoSession): Promise<boolean> {
-    if (!checkAllPlayersFinished(session)) return false;
-
-    session.finished_at = new Date();
-    await repo.save(session);
-
-    return true;
-}
-
-/**
- *
+ * Finds the Archipelago session by the given seed/Discord Guild.
+ * @throws If a session cannot be found.
  */
 export async function findSessionBySeed(
     sessionData: Pick<ArchipelagoSession, 'discord_guild_id' | 'seed'>,

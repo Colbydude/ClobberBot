@@ -2,11 +2,10 @@ import { Client, NetworkSlot } from 'archipelago.js';
 import { TextChannel } from 'discord.js';
 
 import { bot } from './bot';
-import { checkFinished, findSessionBySeed } from './db/repositories/archipelagoSession';
+import { findSessionBySeed } from './db/repositories/archipelagoSession';
 import {
     findSessionPlayersBySlot,
-    finish,
-    release,
+    finishPlayers,
 } from './db/repositories/archipelagoSessionPlayer';
 import { createScopedLogger } from './logger';
 
@@ -53,6 +52,8 @@ export async function connect(
     });
 
     client.messages.on('goaled', async (_, player) => {
+        logger.info(`Goal detected for ${player.alias}.`);
+
         try {
             const guild = await bot.guilds.fetch(guildId);
             const channel = (await guild.channels.fetch(channelId)) as TextChannel;
@@ -63,17 +64,22 @@ export async function connect(
             });
             const players = await findSessionPlayersBySlot(session.id, player.alias);
 
-            const dbPromises = players.map((player) => {
-                return finish(player);
-            });
-            const discordPromises = players.map((player) => {
-                return channel.send(`🎉 | ${player.slot} has finished ${player.game.name}!`);
-            });
+            // Send message(s) to Discord.
+            await Promise.all(
+                players.map((player) =>
+                    channel.send(`🎉 | ${player.slot} has finished ${player.game.name}!`),
+                ),
+            );
 
-            await Promise.all([...dbPromises, ...discordPromises]);
+            // Log in DB.
+            const allFinished = await finishPlayers(session.id, players, 'finished');
 
-            if (await checkFinished(session)) {
+            // Send message if everyone finished.
+            if (allFinished) {
+                logger.info(`All ${players.length} players for ${session.id} have finished.`);
                 await channel.send(`🏁 | Archipelago finished!`);
+                client.socket.disconnect();
+                removeClient(guild.id);
             }
         } catch (error) {
             logger.error(error);
@@ -81,6 +87,8 @@ export async function connect(
     });
 
     client.messages.on('released', async (_, player) => {
+        logger.info(`Release detected for ${player.alias}.`);
+
         try {
             const guild = await bot.guilds.fetch(guildId);
             const channel = (await guild.channels.fetch(channelId)) as TextChannel;
@@ -91,17 +99,22 @@ export async function connect(
             });
             const players = await findSessionPlayersBySlot(session.id, player.alias);
 
-            const dbPromises = players.map((player) => {
-                return release(player);
-            });
-            const discordPromises = players.map((player) => {
-                return channel.send(`💢 | ${player.slot} has released ${player.game.name}.`);
-            });
+            // Send message(s) to Discord.
+            await Promise.all(
+                players.map((player) =>
+                    channel.send(`💢 | ${player.slot} has released ${player.game.name}.`),
+                ),
+            );
 
-            await Promise.all([...dbPromises, ...discordPromises]);
+            // Log in DB.
+            const allFinished = await finishPlayers(session.id, players, 'released');
 
-            if (await checkFinished(session)) {
+            // Send message if everyone finished.
+            if (allFinished) {
+                logger.info(`All ${players.length} players for ${session.id} have finished.`);
                 await channel.send(`🏁 | Archipelago finished!`);
+                client.socket.disconnect();
+                removeClient(guild.id);
             }
         } catch (error) {
             logger.error(error);
@@ -119,6 +132,10 @@ export async function connect(
     }
 }
 
+/**
+ * Find the given player by their slot name.
+ * @throws If the slot cannot be found.
+ */
 export function findPlayerBySlotName(client: Client, alias: string): NetworkSlot {
     const slots = client.players.slots;
 
