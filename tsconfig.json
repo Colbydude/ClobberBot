@@ -12,11 +12,15 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "outDir": "./dist",
+        "paths": {
+            "@/*": ["*"]
+        },
         "removeComments": true,
         "resolveJsonModule": true,
+        "skipLibCheck": true,
         "strictNullChecks": true,
         "target": "es2022"
     },
-    "include": ["src/**/*.ts", "test/**/*.ts"],
-    "exclude": ["coverage", "dist", "node_modules"]
+    "include": ["src/**/*.ts"],
+    "exclude": ["coverage", "dist", "node_modules", "test"]
 }

@@ -46,5 +46,5 @@ export class ArchipelagoSessionPlayer {
     updated_at: Date;
 
     @Column('datetime', { nullable: true })
-    finished_at: Date;
+    finished_at: Date | null;
 }

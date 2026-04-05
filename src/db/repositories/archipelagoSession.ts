@@ -14,14 +14,14 @@ export async function createSession(
 
     try {
         await findSessionBySeed(sessionData);
-
-        throw 'Session already created for this seed!';
     } catch (error) {
         const session = repo.create(sessionData);
         await repo.save(session);
 
         return session;
     }
+
+    throw 'Session already created for this seed!';
 }
 
 /**

@@ -4,6 +4,7 @@ import { ArchipelagoPlayer } from './models/archipelagoPlayer';
 import { ArchipelagoSession } from './models/archipelagoSession';
 import { ArchipelagoPlayerGame } from './models/archipelagoPlayerGame';
 import { ArchipelagoSessionPlayer } from './models/archipelagoSessionPlayer';
+import { TypeORMWinstonLogger } from './winston-logger';
 import { createScopedLogger } from '../logger';
 
 export const logger = createScopedLogger('DB');
@@ -16,7 +17,8 @@ export const DB = new DataSource({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     synchronize: true,
-    logging: false,
+    logging: true,
+    logger: new TypeORMWinstonLogger(),
     entities: [
         ArchipelagoPlayer,
         ArchipelagoPlayerGame,

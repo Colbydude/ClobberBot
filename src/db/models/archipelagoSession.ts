@@ -34,10 +34,10 @@ export class ArchipelagoSession {
     updated_at: Date;
 
     @Column('datetime', { nullable: true })
-    finished_at: Date;
+    finished_at: Date | null;
 
     @OneToMany((_) => ArchipelagoSessionPlayer, (player) => player.session, {
         createForeignKeyConstraints: false,
     })
-    players: ArchipelagoSessionPlayer;
+    players: ArchipelagoSessionPlayer[];
 }
