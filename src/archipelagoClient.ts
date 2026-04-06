@@ -8,10 +8,12 @@ import {
     finishPlayers,
 } from './db/repositories/archipelagoSessionPlayer';
 import { createScopedLogger } from './logger';
+import Queue from './queue';
 
 const logger = createScopedLogger('Archipelago');
 
 export const activeClients: { guild: string; channel: string; client: Client }[] = [];
+export const listenerQueue = new Queue<void>();
 
 /**
  * Connect the bot to the Archipelago server.
@@ -52,73 +54,81 @@ export async function connect(
     });
 
     client.messages.on('goaled', async (_, player) => {
-        logger.info(`Goal detected for ${player.alias}.`);
+        listenerQueue.enqueue(async () => {
+            logger.info(`Goal detected for ${player.alias}.`);
 
-        try {
-            const guild = await bot.guilds.fetch(guildId);
-            const channel = (await guild.channels.fetch(channelId)) as TextChannel;
+            try {
+                const guild = await bot.guilds.fetch(guildId);
+                const channel = (await guild.channels.fetch(channelId)) as TextChannel;
 
-            const session = await findSessionBySeed({
-                discord_guild_id: guildId,
-                seed: client.room.seedName,
-            });
-            const players = await findSessionPlayersBySlot(session.id, player.alias);
+                const session = await findSessionBySeed({
+                    discord_guild_id: guildId,
+                    seed: client.room.seedName,
+                });
+                const players = (await findSessionPlayersBySlot(session.id, player.alias)).filter(
+                    (p) => p.finished_at == null,
+                );
 
-            // Send message(s) to Discord.
-            await Promise.all(
-                players.map((player) =>
-                    channel.send(`🎉 | ${player.slot} has finished ${player.game.name}!`),
-                ),
-            );
+                // Send message(s) to Discord.
+                await Promise.all(
+                    players.map((player) =>
+                        channel.send(`🎉 | ${player.slot} has finished ${player.game.name}!`),
+                    ),
+                );
 
-            // Log in DB.
-            const allFinished = await finishPlayers(session.id, players, 'finished');
+                // Log in DB.
+                const allFinished = await finishPlayers(session.id, players, 'finished');
 
-            // Send message if everyone finished.
-            if (allFinished) {
-                logger.info(`All ${players.length} players for ${session.id} have finished.`);
-                await channel.send(`🏁 | Archipelago finished!`);
-                client.socket.disconnect();
-                removeClient(guild.id);
+                // Send message if everyone finished.
+                if (allFinished) {
+                    logger.info(`All ${players.length} players for ${session.id} have finished.`);
+                    await channel.send(`🏁 | Archipelago finished!`);
+                    client.socket.disconnect();
+                    removeClient(guild.id);
+                }
+            } catch (error) {
+                logger.error(error);
             }
-        } catch (error) {
-            logger.error(error);
-        }
+        });
     });
 
     client.messages.on('released', async (_, player) => {
-        logger.info(`Release detected for ${player.alias}.`);
+        listenerQueue.enqueue(async () => {
+            logger.info(`Release detected for ${player.alias}.`);
 
-        try {
-            const guild = await bot.guilds.fetch(guildId);
-            const channel = (await guild.channels.fetch(channelId)) as TextChannel;
+            try {
+                const guild = await bot.guilds.fetch(guildId);
+                const channel = (await guild.channels.fetch(channelId)) as TextChannel;
 
-            const session = await findSessionBySeed({
-                discord_guild_id: guildId,
-                seed: client.room.seedName,
-            });
-            const players = await findSessionPlayersBySlot(session.id, player.alias);
+                const session = await findSessionBySeed({
+                    discord_guild_id: guildId,
+                    seed: client.room.seedName,
+                });
+                const players = (await findSessionPlayersBySlot(session.id, player.alias)).filter(
+                    (p) => p.finished_at == null,
+                );
 
-            // Send message(s) to Discord.
-            await Promise.all(
-                players.map((player) =>
-                    channel.send(`💢 | ${player.slot} has released ${player.game.name}.`),
-                ),
-            );
+                // Send message(s) to Discord.
+                await Promise.all(
+                    players.map((player) =>
+                        channel.send(`💢 | ${player.slot} has released ${player.game.name}.`),
+                    ),
+                );
 
-            // Log in DB.
-            const allFinished = await finishPlayers(session.id, players, 'released');
+                // Log in DB.
+                const allFinished = await finishPlayers(session.id, players, 'released');
 
-            // Send message if everyone finished.
-            if (allFinished) {
-                logger.info(`All ${players.length} players for ${session.id} have finished.`);
-                await channel.send(`🏁 | Archipelago finished!`);
-                client.socket.disconnect();
-                removeClient(guild.id);
+                // Send message if everyone finished.
+                if (allFinished) {
+                    logger.info(`All ${players.length} players for ${session.id} have finished.`);
+                    await channel.send(`🏁 | Archipelago finished!`);
+                    client.socket.disconnect();
+                    removeClient(guild.id);
+                }
+            } catch (error) {
+                logger.error(error);
             }
-        } catch (error) {
-            logger.error(error);
-        }
+        });
     });
 
     try {

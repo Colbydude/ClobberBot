@@ -17,7 +17,7 @@ export const DB = new DataSource({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     synchronize: true,
-    logging: true,
+    logging: false,
     logger: new TypeORMWinstonLogger(),
     entities: [
         ArchipelagoPlayer,
