@@ -1,4 +1,5 @@
 import { type Client } from 'archipelago.js';
+import { Table } from 'embed-table';
 import {
     ButtonStyle,
     CommandContext,
@@ -13,7 +14,7 @@ import ClobBotCommand from '../clobbotcommand';
 import { type ArchipelagoPlayer } from '../db/models/archipelagoPlayer';
 import { type ArchipelagoPlayerGame } from '../db/models/archipelagoPlayerGame';
 import { type ArchipelagoSession } from '../db/models/archipelagoSession';
-import { findOrCreatePlayer } from '../db/repositories/archipelagoPlayer';
+import { findOrCreatePlayer, getPlayerLeaderboard } from '../db/repositories/archipelagoPlayer';
 import { findOrCreateGameForPlayer } from '../db/repositories/archipelagoPlayerGame';
 import { createSession } from '../db/repositories/archipelagoSession';
 import { addSessionPlayer } from '../db/repositories/archipelagoSessionPlayer';
@@ -44,6 +45,11 @@ export default class ArchipelagoStart extends ClobBotCommand {
                             required: true,
                         },
                     ],
+                },
+                {
+                    type: CommandOptionType.SUB_COMMAND,
+                    name: 'leaderboard',
+                    description: 'Display the Archipelago Leaderboard',
                 },
             ],
         });
@@ -212,10 +218,49 @@ export default class ArchipelagoStart extends ClobBotCommand {
                     await ctx.send({
                         content: `🎮 | ${member.user.username} joined under slot ${slot}, playing ${client.players.self.game}!`,
                     });
+
+                    break;
+                case 'leaderboard':
+                    const leaderboard = await getPlayerLeaderboard();
+                    const emojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+
+                    const table = new Table({
+                        titles: ['🏅', 'User', 'Points', '(C/R)'],
+                        titleIndexes: [0, 4, 36, 66],
+                        columnIndexes: [0, 4, 20, 36],
+                        start: '`',
+                        end: '`',
+                    });
+
+                    leaderboard.forEach((entry) => {
+                        table.addRow([
+                            `${emojis.shift()}`,
+                            `${entry.discord_username}`,
+                            `${entry.score} Points`,
+                            `(${entry.total_completions}/${entry.total_releases})`,
+                        ]);
+                    });
+
+                    await ctx.send({
+                        embeds: [
+                            {
+                                title: 'Archipelago Leaderboard',
+                                fields: [table.toField()],
+                                thumbnail: {
+                                    url: 'https://avatars.githubusercontent.com/u/76268402?s=200&v=4',
+                                },
+                                color: 0x5865f2,
+                            },
+                        ],
+                    });
+
+                    break;
             }
         } catch (error) {
             await this.handleError(ctx, error);
             return;
         }
     }
+
+    async displayLeaderboard(): Promise<void> {}
 }
